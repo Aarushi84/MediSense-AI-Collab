@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import { API_URL } from "../config";
 
@@ -53,15 +53,7 @@ export default function PatientResults() {
     });
   };
 
-  const getBMI = () => {
-    if (!selected?.height || !selected?.weight) return null;
-
-    const h = Number(selected.height);
-    const w = Number(selected.weight);
-    if (!h || !w) return null;
-
-    return (w / ((h / 100) ** 2)).toFixed(1);
-  };
+ 
 
   const downloadPDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
