@@ -126,7 +126,7 @@ export default function PatientUpload() {
               />
 
               {imagePreview ? (
-                <img src={imagePreview} className="w-32 mx-auto rounded-lg" />
+               <img src={imagePreview} alt="Uploaded symptom preview" className="w-32 mx-auto rounded-lg" />
               ) : (
                 <p className="text-slate-400">Upload Symptom Image</p>
               )}
@@ -213,10 +213,11 @@ export default function PatientUpload() {
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center space-y-3">
             {imagePreview && (
-              <img
-                src={imagePreview}
-                className="w-28 h-28 object-cover rounded-xl mx-auto border border-white/10"
-              />
+             <img
+  src={imagePreview}
+  alt="Uploaded symptom"
+  className="w-28 h-28 object-cover rounded-xl mx-auto border border-white/10"
+/>
             )}
 
             <h2 className="text-xl font-bold">{result.disease}</h2>

@@ -5,7 +5,7 @@ import { API_URL } from "../config";
 export default function PatientResults() {
   const [reports, setReports] = useState([]);
   const [selected, setSelected] = useState(null);
-  const reportRef = useRef();
+ 
 
   useEffect(() => {
     fetch(`${API_URL}/reports`, {
@@ -61,21 +61,6 @@ export default function PatientResults() {
     if (!h || !w) return null;
 
     return (w / ((h / 100) ** 2)).toFixed(1);
-  };
-
-  const getHealthScore = () => {
-    if (!selected) return 0;
-
-    let score = 100;
-
-    if (selected.severity === "High") score -= 30;
-    else if (selected.severity === "Moderate") score -= 15;
-    else if (selected.severity === "Low") score -= 5;
-
-    const bmi = getBMI();
-    if (bmi && Number(bmi) > 25) score -= 10;
-
-    return Math.max(score, 0);
   };
 
   const downloadPDF = () => {
