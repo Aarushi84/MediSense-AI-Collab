@@ -1,0 +1,21 @@
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+.env
+*.env
+!.env.example
+
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+.DS_Store
+.vscode/
+
+# Frontend build
+frontend/build/
+frontend/dist/
+
+# Python cache
+*.pyo
