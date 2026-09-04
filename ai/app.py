@@ -336,7 +336,9 @@ async def predict(request: Request):
             status_code=500
         )
 
-
+@app.get("/predict")
+def predict_get():
+    return {"message": "GET /predict is working"}
 # =========================================================
 # PDF SUMMARY API
 # =========================================================
