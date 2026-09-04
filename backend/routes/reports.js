@@ -3,6 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const fs = require("fs");
 const pdfParse = require("pdf-parse");
+const FormData = require("form-data");
 
 const Report = require("../models/Report");
 const aiDoctor = require("../utils/aiDoctor");
@@ -74,31 +75,55 @@ router.post("/predict-image", upload.single("image"), async (req, res) => {
     let disease = "Unknown";
     let confidence = 0;
 
-  try {
-  const aiUrl = `${process.env.AI_SERVICE_URL}/predict`;
+ try {
+  const form = new FormData();
+
+  form.append("image", imgBuffer, {
+    filename: req.file.originalname,
+    contentType: req.file.mimetype
+  });
 
   console.log("========== AI DEBUG ==========");
   console.log("AI_SERVICE_URL:", process.env.AI_SERVICE_URL);
-  console.log("FINAL AI URL:", aiUrl);
+  console.log(
+    "FINAL AI URL:",
+    `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict`
+  );
   console.log("IMAGE SIZE:", imgBuffer.length);
 
-  const flaskRes = await axios.post(
-    aiUrl,
+  const startResponse = await axios.post(
+    `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict`,
+    form,
     {
-      image: imgBuffer.toString("base64")
-    },
-    {
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: form.getHeaders(),
       timeout: 120000
     }
   );
 
-  console.log("AI RESPONSE:", flaskRes.data);
+  console.log("GRADIO START RESPONSE:", startResponse.data);
 
-  disease = flaskRes.data?.disease || "Unknown";
-  confidence = flaskRes.data?.confidence || 0;
+  const eventId = startResponse.data.event_id;
+
+  const resultResponse = await axios.get(
+    `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict/${eventId}`,
+    {
+      timeout: 120000
+    }
+  );
+
+  console.log("GRADIO RESULT:", resultResponse.data);
+
+  const output = resultResponse.data;
+
+  if (output?.data && Array.isArray(output.data)) {
+    disease = output.data[0] || "Unknown";
+    confidence = parseFloat(
+      String(output.data[1] || "0").replace("%", "")
+    ) || 0;
+  }
+
+  console.log("FINAL DISEASE:", disease);
+  console.log("FINAL CONFIDENCE:", confidence);
 
 } catch (err) {
   console.log("========== AI ERROR ==========");
@@ -106,12 +131,10 @@ router.post("/predict-image", upload.single("image"), async (req, res) => {
   console.log("ERROR MESSAGE:", err.message);
   console.log("ERROR STATUS:", err.response?.status);
   console.log("ERROR DATA:", err.response?.data);
-  console.log("AI URL:", `${process.env.AI_SERVICE_URL}/predict`);
 
   disease = "Unknown";
   confidence = 0;
 }
-
     const ai = await aiDoctor.analyzeSymptom({
       text: `Patient diagnosed with ${disease} (${confidence}%)`
     });
