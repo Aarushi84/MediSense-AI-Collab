@@ -74,15 +74,43 @@ router.post("/predict-image", upload.single("image"), async (req, res) => {
     let disease = "Unknown";
     let confidence = 0;
 
-    try {
-      const flaskRes = await axios.post(`${process.env.AI_SERVICE_URL}/predict`, {
-        image: imgBuffer.toString("base64")
-      });
-      disease = flaskRes.data?.disease || "Unknown";
-      confidence = flaskRes.data?.confidence || 0;
-    } catch (err) {
-      console.log("FLASK IMAGE FAIL:", err.response?.data || err.message);
+  try {
+  const aiUrl = `${process.env.AI_SERVICE_URL}/predict`;
+
+  console.log("========== AI DEBUG ==========");
+  console.log("AI_SERVICE_URL:", process.env.AI_SERVICE_URL);
+  console.log("FINAL AI URL:", aiUrl);
+  console.log("IMAGE SIZE:", imgBuffer.length);
+
+  const flaskRes = await axios.post(
+    aiUrl,
+    {
+      image: imgBuffer.toString("base64")
+    },
+    {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      timeout: 120000
     }
+  );
+
+  console.log("AI RESPONSE:", flaskRes.data);
+
+  disease = flaskRes.data?.disease || "Unknown";
+  confidence = flaskRes.data?.confidence || 0;
+
+} catch (err) {
+  console.log("========== AI ERROR ==========");
+  console.log("ERROR CODE:", err.code);
+  console.log("ERROR MESSAGE:", err.message);
+  console.log("ERROR STATUS:", err.response?.status);
+  console.log("ERROR DATA:", err.response?.data);
+  console.log("AI URL:", `${process.env.AI_SERVICE_URL}/predict`);
+
+  disease = "Unknown";
+  confidence = 0;
+}
 
     const ai = await aiDoctor.analyzeSymptom({
       text: `Patient diagnosed with ${disease} (${confidence}%)`
