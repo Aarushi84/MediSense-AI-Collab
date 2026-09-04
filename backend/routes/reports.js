@@ -83,16 +83,16 @@ router.post("/predict-image", upload.single("image"), async (req, res) => {
     contentType: req.file.mimetype
   });
 
+  const aiUrl = `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict`;
+
   console.log("========== AI DEBUG ==========");
   console.log("AI_SERVICE_URL:", process.env.AI_SERVICE_URL);
-  console.log(
-    "FINAL AI URL:",
-    `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict`
-  );
+  console.log("FINAL AI URL:", aiUrl);
   console.log("IMAGE SIZE:", imgBuffer.length);
 
+  // Start Gradio prediction
   const startResponse = await axios.post(
-    `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict`,
+    aiUrl,
     form,
     {
       headers: form.getHeaders(),
@@ -102,8 +102,13 @@ router.post("/predict-image", upload.single("image"), async (req, res) => {
 
   console.log("GRADIO START RESPONSE:", startResponse.data);
 
-  const eventId = startResponse.data.event_id;
+  const eventId = startResponse.data?.event_id;
 
+  if (!eventId) {
+    throw new Error("No event_id returned by Gradio");
+  }
+
+  // Wait for Gradio result
   const resultResponse = await axios.get(
     `${process.env.AI_SERVICE_URL}/gradio_api/call/gradio_predict/${eventId}`,
     {
@@ -117,9 +122,11 @@ router.post("/predict-image", upload.single("image"), async (req, res) => {
 
   if (output?.data && Array.isArray(output.data)) {
     disease = output.data[0] || "Unknown";
-    confidence = parseFloat(
-      String(output.data[1] || "0").replace("%", "")
-    ) || 0;
+
+    confidence =
+      parseFloat(
+        String(output.data[1] || "0").replace("%", "")
+      ) || 0;
   }
 
   console.log("FINAL DISEASE:", disease);
